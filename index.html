@@ -614,7 +614,7 @@ ${isAdminMode ? `
     const summaryParts = Object.entries(countMap).map(([name, qty]) =>
       qty > 1 ? `${name} ${qty}EA` : name
     );
-    summaryParts.push("환풍기(힘펠)", "다운라이트 2EA");
+    summaryParts.push("다운라이트 2EA");
     document.getElementById("summaryText").value = summaryParts.join(", ");
   }
 
