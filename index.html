@@ -467,6 +467,7 @@ position: relative;
       <ul id="selectedItems"></ul>
       <p><strong>총액: </strong><span id="totalPrice">0</span>원</p>
       <button onclick="summarizeEstimate()">정리</button>
+<button onclick="clearEstimate()" style="margin-left: 10px;">전체 삭제</button>
       <textarea id="summaryText" style="width:100%; height:100px; margin-top:10px;"></textarea>
     </div>
   </div> <!-- end of flex layout -->
@@ -895,6 +896,13 @@ function unmarkAsBasic(category, name) {
     alert("기본형이 해제되었습니다!");
     fetchMaterials().then(() => showItems(currentCategory));
   });
+}
+function clearEstimate() {
+  if (confirm("견적 항목을 모두 삭제하시겠습니까?")) {
+    selected = [];
+    renderEstimate();
+    document.getElementById("summaryText").value = "";
+  }
 }
 
   </script>
