@@ -341,6 +341,17 @@ position: relative;
     padding: 10px;
   }
 
+.estimate-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.estimate-buttons button {
+  width: 100%;
+}
+
   .category, .items, .estimate {
     width: 100% !important;
     max-width: 100%;
@@ -444,6 +455,7 @@ position: relative;
 <ul class="sub-category">
   <li onclick="selectCategory('세트')">세트</li>
 </ul>
+
     </div>
 
     <div class="items">
@@ -468,8 +480,15 @@ position: relative;
       <p><strong>총액: </strong><span id="totalPrice">0</span>원</p>
       <button onclick="summarizeEstimate()">정리</button>
 <button onclick="clearEstimate()" style="margin-left: 10px;">전체 삭제</button>
+
       <textarea id="summaryText" style="width:100%; height:100px; margin-top:10px;"></textarea>
 <button onclick="copySummaryText()" style="margin-top: 8px;">복사</button>
+<div class="estimate-buttons">
+  <button onclick="saveEstimate(1)">📥 저장1</button>
+  <button onclick="saveEstimate(2)">📥 저장2</button>
+  <button onclick="loadSavedEstimate(1)">📤 불러오기1</button>
+  <button onclick="loadSavedEstimate(2)">📤 불러오기2</button>
+</div>
     </div>
   </div> <!-- end of flex layout -->
 
@@ -483,7 +502,7 @@ position: relative;
   </div>
 
   <script>
-  const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbyTujt87IIM_QenEbo9kUyVSLiIkvoj95wSJ8lbL5XfU0wDY-6MD1p3kx7J5a1XJRga/exec";
+  const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwik5MIerSDHlAtHp8kXCWqHfEbUbF62uoKZknqxe7XqtYDCfBNjmFMwkfog_VD7RnT/exec";
   let materials = {};
   let selected = [];
   let currentCategory = "";
@@ -655,15 +674,6 @@ ${isAdminMode ? `
     isAdminMode = false;
     document.getElementById('adminPanel').style.display = 'none';
     if (currentCategory) showItems(currentCategory);
-  }
-
-  function editItemPrice(index) {
-    const span = document.getElementById(`item-price-${index}`);
-    const item = materials[currentCategory][index];
-    span.innerHTML = `
-      <input type="number" id="new-price-${index}" value="${item.price}" style="width:70px">
-      <button onclick="saveItemPrice(${index})">저장</button>
-    `;
   }
 
 function editItemPrice(index) {
@@ -915,6 +925,53 @@ function copySummaryText() {
     .catch(() => alert("복사에 실패했습니다."));
 }
 
+function loadSavedEstimate(slot) {
+  fetch(`${SHEETS_API_URL}?slot=${slot}`)
+    .then(res => res.json())
+    .then(data => {
+      selected = data.map(item => ({
+        name: item.name,
+        price: parseInt(item.price),
+        quantity: parseInt(item.quantity),
+        category: item.category,
+        img1: item.img1,
+        img2: item.img2
+      }));
+      renderEstimate();
+      alert(`저장${slot}번 견적을 불러왔습니다.`);
+    })
+    .catch(err => {
+      alert("견적 불러오기 실패: " + err);
+    });
+}
+
+function saveEstimate(slot) {
+  if (selected.length === 0) {
+    alert("저장할 견적이 없습니다.");
+    return;
+  }
+
+  const payload = selected.map(item => ({
+    slot,
+    name: item.name,
+    price: item.price,
+    quantity: item.quantity,
+    category: item.category,
+    img1: item.img1,
+    img2: item.img2
+  }));
+
+  fetch(SHEETS_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type: "save", data: payload }),
+    mode: "no-cors"
+  }).then(() => {
+    alert(`저장${slot}번으로 저장되었습니다!`);
+  }).catch(() => {
+    alert("저장에 실패했습니다.");
+  });
+}
   </script>
 
   <div class="admin" id="adminPanel">
