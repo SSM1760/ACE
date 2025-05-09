@@ -469,6 +469,7 @@ position: relative;
       <button onclick="summarizeEstimate()">정리</button>
 <button onclick="clearEstimate()" style="margin-left: 10px;">전체 삭제</button>
       <textarea id="summaryText" style="width:100%; height:100px; margin-top:10px;"></textarea>
+<button onclick="copySummaryText()" style="margin-top: 8px;">복사</button>
     </div>
   </div> <!-- end of flex layout -->
 
@@ -903,6 +904,15 @@ function clearEstimate() {
     renderEstimate();
     document.getElementById("summaryText").value = "";
   }
+}
+
+function copySummaryText() {
+  const textarea = document.getElementById("summaryText");
+  textarea.select();
+  textarea.setSelectionRange(0, 99999); // 모바일 대응
+  navigator.clipboard.writeText(textarea.value)
+    .then(() => alert("복사되었습니다!"))
+    .catch(() => alert("복사에 실패했습니다."));
 }
 
   </script>
