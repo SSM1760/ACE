@@ -622,7 +622,7 @@ ${isAdminMode ? `
   function summarizeEstimate() {
   const countMap = {};
   selected.forEach(item => {
-    if (item.category === "시공비") return; // 시공비는 정리에서 제외
+    if (item.category === "시공비" || item.category === "별도 시공비") return;
     if (!countMap[item.name]) countMap[item.name] = 0;
     countMap[item.name] += item.quantity;
   });
