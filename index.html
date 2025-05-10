@@ -251,6 +251,10 @@ position: relative;
       font-family: inherit;
       resize: none;
     }
+#modalSummaryText {
+  font-size: 26px !important;
+  line-height: 1.6;
+}
 
     #imageModal {
       display: none;
@@ -502,14 +506,23 @@ position: relative;
 
       <textarea id="summaryText" style="width:100%; height:100px; margin-top:10px;"></textarea>
 <button onclick="copySummaryText()" style="margin-top: 8px;">복사</button>
+<button onclick="toggleSummaryModal()" style="margin-top: 8px;">확대</button>
 <div class="estimate-buttons">
   <div class="estimate-buttons-row">
 <button onclick="saveEstimate(1); updateEstimateTitle('거실')">📥 저장(거실)</button>
 <button onclick="saveEstimate(2); updateEstimateTitle('안방')">📥 저장(안방)</button>
   </div>
   <div class="estimate-buttons-row">
-    <button onclick="loadSavedEstimate(1)">📤 확인(거실)</button>
-    <button onclick="loadSavedEstimate(2)">📤 확인(안방)</button>
+    <button onclick="loadSavedEstimate(1)">📂 확인(거실)</button>
+    <button onclick="loadSavedEstimate(2)">📂 확인(안방)</button>
+  </div>
+</div>
+<div id="summaryModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; justify-content:center; align-items:center;">
+  <div style="background:#fff; padding:30px; border-radius:12px; width:90%; max-width:900px; position:relative;">
+    <button onclick="toggleSummaryModal()" style="position:absolute; top:10px; right:10px; font-size:24px; background:none; border:none; cursor:pointer;">✕</button>
+    <h3 style="margin-top:0; text-align:center;">정리된 견적 내용</h3>
+    <textarea id="modalSummaryText" style="width:100%; height:400px;"></textarea>
+    <button onclick="copyModalSummaryText()" style="margin-top:10px;">복사</button>
   </div>
 </div>
   </div> <!-- end of flex layout -->
@@ -525,6 +538,13 @@ position: relative;
 
   <script>
   const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwik5MIerSDHlAtHp8kXCWqHfEbUbF62uoKZknqxe7XqtYDCfBNjmFMwkfog_VD7RnT/exec";
+const CUSTOM_CATEGORY_ORDER = [
+  "타일", "양변기(원피스)", "양변기(투피스)", "세면기", "탑볼",
+  "하부장", "세면수전", "샤워기", "해바라기", "슬라이드장",
+  "욕실장", "플랩장", "상 · 하단장", "거울", "슬라이드바",
+  "수건걸이", "휴지걸이", "대리석", "코너선반", "스프레이건",
+  "욕조", "파티션", "천장"
+];
   let materials = {};
   let selected = [];
   let currentCategory = "";
@@ -637,6 +657,17 @@ ${isAdminMode ? `
   function renderEstimate() {
     const list = document.getElementById('selectedItems');
     list.innerHTML = '';
+
+  selected.sort((a, b) => {
+    const aIndex = CUSTOM_CATEGORY_ORDER.indexOf(a.category);
+    const bIndex = CUSTOM_CATEGORY_ORDER.indexOf(b.category);
+
+    if (aIndex === -1 && bIndex === -1) return 0;
+    if (aIndex === -1) return 1;
+    if (bIndex === -1) return -1;
+    return aIndex - bIndex;
+  });
+
     selected.forEach((item, i) => {
       const nameOnly = item.name.split("(")[0];
       const code = item.name.match(/\((.*?)\)/)?.[1] || '';
@@ -998,6 +1029,21 @@ function saveEstimate(slot) {
 }
 function updateEstimateTitle(text) {
   document.getElementById("estimateTitle").textContent = text;
+}
+function toggleSummaryModal() {
+  const modal = document.getElementById("summaryModal");
+  const textarea = document.getElementById("summaryText");
+  const modalTextarea = document.getElementById("modalSummaryText");
+
+  modalTextarea.value = textarea.value; // 기존 요약내용 복사
+  modal.style.display = modal.style.display === "flex" ? "none" : "flex";
+}
+
+function copyModalSummaryText() {
+  const textarea = document.getElementById("modalSummaryText");
+  textarea.select();
+  document.execCommand("copy");
+  alert("복사되었습니다!");
 }
   </script>
 
