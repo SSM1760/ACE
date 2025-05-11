@@ -520,25 +520,27 @@ position: relative;
   <div class="estimate-buttons-row" style="margin-top: 24px;">
   <button onclick="saveEstimate(3); updateEstimateTitle('세트')">📥 저장(세트)</button>
   <button onclick="loadSavedEstimate(3)">📂 확인(세트)</button>
-<br><br><br><br>
-<div style="text-align: center; font-size: 18px; font-weight: bold;">체크리스트</div>
 </div>
-<div id="categoryTextGroup" style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 12px; font-size: 14px;">
-  <span id="text-타일">타일</span>
-  <span id="text-양변기">양변기</span>
-  <span id="text-세면기">세면기</span>
-  <span id="text-세면수전">세면수전</span>
-  <span id="text-샤워기">샤워기</span>
-  <span id="text-욕실장">욕실장</span>
-  <span id="text-슬라이드바">슬라이드바</span>
-  <span id="text-수건걸이">수건걸이</span>
-  <span id="text-휴지걸이">휴지걸이</span>
-  <span id="text-대리석">대리석</span>
-  <span id="text-코너선반">코너선반</span>
-  <span id="text-천장">천장</span>
-  <span id="text-욕조">욕조</span>
-  <span id="text-파티션">파티션</span>
-</div>
+
+<!-- 체크리스트 제목과 항목을 새 블록으로 분리 -->
+<div style="margin-top: 40px; text-align: center;">
+  <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">체크리스트</div>
+  <div id="categoryTextGroup" style="display: flex; flex-wrap: wrap; gap: 12px; font-size: 14px; justify-content: center;">
+    <span id="text-타일">타일</span>
+    <span id="text-양변기">양변기</span>
+    <span id="text-세면기">세면기</span>
+    <span id="text-세면수전">세면수전</span>
+    <span id="text-샤워기">샤워기</span>
+    <span id="text-욕실장">욕실장</span>
+    <span id="text-슬라이드바">슬라이드바</span>
+    <span id="text-수건걸이">수건걸이</span>
+    <span id="text-휴지걸이">휴지걸이</span>
+    <span id="text-대리석">대리석</span>
+    <span id="text-코너선반">코너선반</span>
+    <span id="text-천장">천장</span>
+    <span id="text-욕조">욕조</span>
+    <span id="text-파티션">파티션</span>
+  </div>
 </div>
 <div id="summaryModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; justify-content:center; align-items:center;">
   <div style="background:#fff; padding:30px; border-radius:12px; width:90%; max-width:900px; position:relative;">
