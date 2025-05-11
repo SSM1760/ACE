@@ -515,6 +515,21 @@ position: relative;
   <div class="estimate-buttons-row">
     <button onclick="loadSavedEstimate(1)">📂 확인(거실)</button>
     <button onclick="loadSavedEstimate(2)">📂 확인(안방)</button>
+<div id="categoryCheckBoxGroup" style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 12px; font-size: 14px;">
+  <label><input type="checkbox" id="chk-타일" disabled> 타일</label>
+  <label><input type="checkbox" id="chk-양변기" disabled> 양변기</label>
+  <label><input type="checkbox" id="chk-세면기" disabled> 세면기</label>
+  <label><input type="checkbox" id="chk-세면수전" disabled> 세면수전</label>
+  <label><input type="checkbox" id="chk-샤워기" disabled> 샤워기</label>
+  <label><input type="checkbox" id="chk-욕실장" disabled> 욕실장</label>
+  <label><input type="checkbox" id="chk-슬라이드바" disabled> 슬라이드바</label>
+  <label><input type="checkbox" id="chk-수건걸이" disabled> 수건걸이</label>
+  <label><input type="checkbox" id="chk-휴지걸이" disabled> 휴지걸이</label>
+  <label><input type="checkbox" id="chk-대리석" disabled> 대리석</label>
+  <label><input type="checkbox" id="chk-코너선반" disabled> 코너선반</label>
+  <label><input type="checkbox" id="chk-천장" disabled> 천장</label>
+  <label><input type="checkbox" id="chk-욕조" disabled> 욕조</label>
+  <label><input type="checkbox" id="chk-파티션" disabled> 파티션</label>
   </div>
 </div>
 <div id="summaryModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; justify-content:center; align-items:center;">
@@ -686,6 +701,7 @@ ${isAdminMode ? `
       `;
     });
     updateTotal();
+updateCategoryCheckboxes();
   }
 
   function updateTotal() {
@@ -1044,6 +1060,31 @@ function copyModalSummaryText() {
   textarea.select();
   document.execCommand("copy");
   alert("복사되었습니다!");
+}
+function updateCategoryCheckboxes() {
+  const selectedCategories = selected.map(i => i.category);
+  const includesAll = (arr) => arr.every(c => selectedCategories.includes(c));
+
+  document.getElementById("chk-타일").checked = selectedCategories.includes("타일");
+  document.getElementById("chk-양변기").checked = selectedCategories.includes("양변기(원피스)") || selectedCategories.includes("양변기(투피스)");
+  document.getElementById("chk-세면기").checked = selectedCategories.includes("세면기") || selectedCategories.includes("탑볼") || selectedCategories.includes("하부장");
+  document.getElementById("chk-세면수전").checked = selectedCategories.includes("세면수전");
+  document.getElementById("chk-샤워기").checked = selectedCategories.includes("샤워기") || selectedCategories.includes("해바라기");
+  
+  // 욕실장 조건 3가지 중 하나 만족
+  const chk1 = selectedCategories.includes("슬라이드장");
+  const chk2 = includesAll(["욕실장", "거울"]);
+  const chk3 = includesAll(["상 · 하단장", "거울"]);
+  document.getElementById("chk-욕실장").checked = chk1 || chk2 || chk3;
+
+  document.getElementById("chk-슬라이드바").checked = selectedCategories.includes("슬라이드바");
+  document.getElementById("chk-수건걸이").checked = selectedCategories.includes("수건걸이");
+  document.getElementById("chk-휴지걸이").checked = selectedCategories.includes("휴지걸이");
+  document.getElementById("chk-대리석").checked = selectedCategories.includes("대리석");
+  document.getElementById("chk-코너선반").checked = selectedCategories.includes("코너선반");
+  document.getElementById("chk-천장").checked = selectedCategories.includes("천장");
+  document.getElementById("chk-욕조").checked = selectedCategories.includes("욕조");
+  document.getElementById("chk-파티션").checked = selectedCategories.includes("파티션");
 }
   </script>
 
