@@ -515,6 +515,12 @@ position: relative;
   <div class="estimate-buttons-row">
     <button onclick="loadSavedEstimate(1)">📂 확인(거실)</button>
     <button onclick="loadSavedEstimate(2)">📂 확인(안방)</button>
+  </div>
+  <!-- ✅ 세트 버튼 추가 -->
+  <div class="estimate-buttons-row" style="margin-top: 24px;">
+  <button onclick="saveEstimate(3); updateEstimateTitle('세트')">📥 저장(세트)</button>
+  <button onclick="loadSavedEstimate(3)">📂 확인(세트)</button>
+</div>
 <div id="categoryCheckBoxGroup" style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 12px; font-size: 14px;">
   <label><input type="checkbox" id="chk-타일" disabled> 타일</label>
   <label><input type="checkbox" id="chk-양변기" disabled> 양변기</label>
