@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -602,16 +603,29 @@ materials[item.category].push({
   }
 
   function showItems(category) {
-    const container = document.getElementById('items');
-    container.innerHTML = '';
-    let items = materials[category] ? [...materials[category]] : [];
+  const container = document.getElementById('items');
+  container.innerHTML = '';
 
-    if (currentSort === 'name') {
-      items.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-    } else if (currentSort === 'price') {
-      items.sort((a, b) => a.price - b.price);
-    }
-items.sort((a, b) => {
+  // ✅ 세트 카테고리일 때 커스텀 입력폼 추가
+  if (category === '세트') {
+  container.innerHTML += `
+    <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; border-radius: 10px;">
+      <label>이름: <input type="text" id="customName" style="width: 120px;"></label>
+      <label>금액: <input type="number" id="customPrice" style="width: 120px;"></label>
+      <label>수량: <input type="number" id="customQty" value="1" min="1" style="width: 60px;"></label>
+      <button onclick="addCustomSetItem()">추가</button>
+    </div>
+  `;
+}
+
+  let items = materials[category] ? [...materials[category]] : [];
+
+  if (currentSort === 'name') {
+    items.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+  } else if (currentSort === 'price') {
+    items.sort((a, b) => a.price - b.price);
+  }
+  items.sort((a, b) => {
     if (a.isBest && !b.isBest) return -1;
     if (!a.isBest && b.isBest) return 1;
     return 0;
@@ -1102,6 +1116,31 @@ function updateCategoryTexts() {
   highlight("천장", selectedCategories.includes("천장"));
   highlight("욕조", selectedCategories.includes("욕조"));
   highlight("파티션", selectedCategories.includes("파티션"));
+}
+
+function addCustomSetItem() {
+  const name = document.getElementById('customName').value.trim();
+  const price = parseInt(document.getElementById('customPrice').value);
+  const qty = parseInt(document.getElementById('customQty').value);
+
+  if (!name || isNaN(price) || isNaN(qty) || qty <= 0) {
+    alert("이름, 금액, 수량을 정확히 입력하세요.");
+    return;
+  }
+
+  selected.push({
+    name: name,
+    price: price,
+    quantity: qty,
+    category: '세트',
+    img1: '',  
+    img2: ''
+  });
+
+  renderEstimate();
+  document.getElementById('customName').value = '';
+  document.getElementById('customPrice').value = '';
+  document.getElementById('customQty').value = '1';
 }
   </script>
 
