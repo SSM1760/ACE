@@ -1128,14 +1128,29 @@ function addCustomSetItem() {
     return;
   }
 
-  selected.push({
-    name: name,
-    price: price,
-    quantity: qty,
-    category: '세트',
-    img1: '',  
-    img2: ''
+  // 입력한 이름에서 () 앞부분만 추출
+  const baseName = name.split("(")[0].trim();
+
+  // selected 배열에서 동일 baseName 찾기
+  const existing = selected.find(item => {
+    const existingBaseName = item.name.split("(")[0].trim();
+    return existingBaseName === baseName;
   });
+
+  if (existing) {
+    // 금액만 누적
+    existing.price += price;
+  } else {
+    // 새로 추가
+    selected.push({
+      name: name,
+      price: price,
+      quantity: qty,
+      category: '세트',
+      img1: '',  
+      img2: ''
+    });
+  }
 
   renderEstimate();
   document.getElementById('customName').value = '';
