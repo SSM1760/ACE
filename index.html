@@ -96,6 +96,10 @@
 position: relative;
     }
 
+.item.selected-border {
+  border: 2px solid red !important;
+}
+
     .item:hover {
       transform: translateY(-3px);
     }
@@ -632,21 +636,26 @@ materials[item.category].push({
   });
 
     items.forEach((item, i) => {
-      const div = document.createElement('div');
-      div.className = 'item';
-      div.innerHTML = `
-  ${item.isBest ? `<div class="best-badge">BEST</div>` : ""}
-${item.isBasic ? `<div class="basic-badge">기본형</div>` : ""}
-  <img src="${item.img1}" onclick="openModal('${item.img1}', '${item.img2}')">
-  <div class="name">${item.name}</div>
-  <div class="price">
-    <span id="item-price-${i}">${item.price.toLocaleString()}원</span>
-    ${isAdminMode ? `<button onclick="editItemPrice(${i})">✎</button>` : ""}
-  </div>
-  <div class="control">
-    <input type="number" min="1" value="1" id="qty-${item.name}">
-    <button onclick="addToEstimate('${category}', '${item.name}')">추가</button>
-  </div>
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.innerHTML = `
+    ${item.isBest ? `<div class="best-badge">BEST</div>` : ""}
+    ${item.isBasic ? `<div class="basic-badge">기본형</div>` : ""}
+    <img src="${item.img1}" onclick="openModal('${item.img1}', '${item.img2}')">
+    <div class="name">${item.name}</div>
+    <div class="price">
+      <span id="item-price-${i}">${item.price.toLocaleString()}원</span>
+      ${isAdminMode ? `<button onclick="editItemPrice(${i})">✎</button>` : ""}
+    </div>
+    <div class="control">
+      <input type="number" min="1" value="1" id="qty-${item.name}">
+      <button onclick="addToEstimate('${category}', '${item.name}')">추가</button>
+      ${
+        selected.some(sel => sel.name === item.name)
+          ? `<button onclick="removeFromEstimate('${item.name}')">취소</button>`
+          : ""
+      }
+    </div>
 ${isAdminMode ? `
   ${item.isBest
     ? `<button class="best-btn" onclick="unmarkAsBest('${category}', '${item.name}')">BEST 삭제</button>`
@@ -658,6 +667,8 @@ ${isAdminMode ? `
 `;
       container.appendChild(div);
     });
+
+  updateSelectedBorders();
   }
 
   function sortMaterials(type) {
@@ -682,8 +693,9 @@ ${isAdminMode ? `
       selected.push({ ...item, quantity: qty, category });
     }
 
-    renderEstimate();
-  }
+renderEstimate();
+showItems(currentCategory);
+}
 
   function addAllFromSet() {
     const items = materials[currentCategory] || [];
@@ -692,6 +704,18 @@ ${isAdminMode ? `
     });
     renderEstimate();
   }
+// ✅ 여기 아래에 삽입
+function updateSelectedBorders() {
+  document.querySelectorAll('.item').forEach(div => {
+    const name = div.querySelector('.name').textContent;
+    const isSelected = selected.some(item => item.name === name);
+    if (isSelected) {
+      div.classList.add('selected-border');
+    } else {
+      div.classList.remove('selected-border');
+    }
+  });
+}
 
   function renderEstimate() {
     const list = document.getElementById('selectedItems');
@@ -724,7 +748,8 @@ ${isAdminMode ? `
         </li>
       `;
     });
-    updateTotal();
+updateSelectedBorders();
+updateTotal();
 updateCategoryTexts();
   }
 
@@ -751,6 +776,13 @@ updateCategoryTexts();
     selected.splice(index, 1);
     renderEstimate();
   }
+
+function removeFromEstimate(name) {
+  selected = selected.filter(item => item.name !== name);
+  renderEstimate();
+  updateSelectedBorders();
+  showItems(currentCategory);
+}
 
   function toggleAdmin() {
     const pw = prompt("관리자 비밀번호를 입력하세요:");
