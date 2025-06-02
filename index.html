@@ -916,6 +916,12 @@ function findItemByName(category, name) {
   let modalImages = [];
   let modalIndex = 0;
 
+  // ✅ 뒤로가기 차단 (여기 추가)
+  history.pushState(null, null, location.href);
+  window.addEventListener('popstate', function(event) {
+      history.pushState(null, null, location.href);
+  });
+
   function openModal(img1, img2) {
     if (!img2 || img2 === "undefined") img2 = img1;
     modalImages = [img1, img2];
