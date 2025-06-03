@@ -773,9 +773,10 @@ updateCategoryTexts();
   }
 
   function removeItem(index) {
-    selected.splice(index, 1);
-    renderEstimate();
-  }
+  selected.splice(index, 1);
+  renderEstimate();
+  showItems(currentCategory);
+}
 
 function removeFromEstimate(name) {
   selected = selected.filter(item => item.name !== name);
