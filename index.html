@@ -1338,6 +1338,9 @@ function loadCustomEstimate(slotNumber) {
 
       document.getElementById(`customTitle-${slotNumber}`).value = data.title || "";
 
+      // ✅ 불러올 때 estimateTitle도 갱신
+      document.getElementById("estimateTitle").textContent = data.title || "견적서";
+
       renderEstimate();
       alert(`"${data.title}" 견적을 불러왔습니다.`);
     })
