@@ -547,6 +547,57 @@ position: relative;
     <span id="text-파티션">파티션</span>
   </div>
 </div>
+
+<div style="margin-top: 40px; text-align: center;">
+  <div style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">추가 저장 슬롯</div>
+
+<div id="customSaveSlots" style="display: flex; flex-direction: column; gap: 16px; align-items: center;">
+
+  <!-- 슬롯1 -->
+  <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;">
+    <input id="customTitle-1" type="text" placeholder="제목 입력" style="width: 160px; padding: 6px;">
+    <div style="display:flex; gap: 8px; margin-bottom: 10px;">
+      <button onclick="saveCustomEstimate(1)">📥 저장</button>
+      <button onclick="loadCustomEstimate(1)">📂 확인</button>
+    </div>
+  </div>
+
+  <!-- 슬롯2 -->
+  <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;">
+    <input id="customTitle-2" type="text" placeholder="제목 입력" style="width: 160px; padding: 6px;">
+    <div style="display:flex; gap: 8px; margin-bottom: 10px;">
+      <button onclick="saveCustomEstimate(2)">📥 저장</button>
+      <button onclick="loadCustomEstimate(2)">📂 확인</button>
+    </div>
+  </div>
+
+  <!-- 슬롯3 -->
+  <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;">
+    <input id="customTitle-3" type="text" placeholder="제목 입력" style="width: 160px; padding: 6px;">
+    <div style="display:flex; gap: 8px; margin-bottom: 10px;">
+      <button onclick="saveCustomEstimate(3)">📥 저장</button>
+      <button onclick="loadCustomEstimate(3)">📂 확인</button>
+    </div>
+  </div>
+
+  <!-- 슬롯4 -->
+  <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;">
+    <input id="customTitle-4" type="text" placeholder="제목 입력" style="width: 160px; padding: 6px;">
+    <div style="display:flex; gap: 8px; margin-bottom: 10px;">
+      <button onclick="saveCustomEstimate(4)">📥 저장</button>
+      <button onclick="loadCustomEstimate(4)">📂 확인</button>
+    </div>
+  </div>
+
+  <!-- 슬롯5 -->
+  <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;">
+    <input id="customTitle-5" type="text" placeholder="제목 입력" style="width: 160px; padding: 6px;">
+    <div style="display:flex; gap: 8px; margin-bottom: 10px;">
+      <button onclick="saveCustomEstimate(5)">📥 저장</button>
+      <button onclick="loadCustomEstimate(5)">📂 확인</button>
+    </div>
+  </div>
+</div>
 <div id="summaryModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; justify-content:center; align-items:center;">
   <div style="background:#fff; padding:30px; border-radius:12px; width:90%; max-width:900px; position:relative;">
     <button onclick="toggleSummaryModal()" style="position:absolute; top:10px; right:10px; font-size:24px; background:none; border:none; cursor:pointer;">✕</button>
@@ -584,7 +635,7 @@ position: relative;
 </div>
 
   <script>
-  const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbyh9afKl1VMDWc6dIyZ6aLhmaC0h2V1YiaQppbvTT9wXCshDNl-2Nmg6AkyQU3ISm92/exec";
+  const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbxCqTV3DHa4r62DdV5ZYTiKNpYItE_XJCziMBAen-R7as9NzEozYJhNOM7-KgVGsy4A/exec";
 const CUSTOM_CATEGORY_ORDER = [
   "타일", "양변기(원피스)", "양변기(투피스)", "세면기", "탑볼",
   "하부장", "세면수전", "샤워기", "해바라기", "슬라이드장",
@@ -930,15 +981,30 @@ function findItemByName(category, name) {
     }
   }
 
-  window.onload = fetchMaterials;
-  let modalImages = [];
-  let modalIndex = 0;
+let modalImages = [];
+let modalIndex = 0;
+
+window.onload = function() {
+  fetchMaterials();
+
+  fetch(`${SHEETS_API_URL}?type=get_all_titles`)
+    .then(res => res.json())
+    .then(titles => {
+      for (let i = 1; i <= 5; i++) {
+        const title = titles[100 + i] || "";
+        document.getElementById(`customTitle-${i}`).value = title;
+      }
+    })
+    .catch(err => {
+      console.error("타이틀 불러오기 실패", err);
+    });
 
   // ✅ 뒤로가기 차단 (여기 추가)
   history.pushState(null, null, location.href);
   window.addEventListener('popstate', function(event) {
       history.pushState(null, null, location.href);
   });
+}
 
   function openModal(img1, img2) {
     if (!img2 || img2 === "undefined") img2 = img1;
@@ -1141,6 +1207,7 @@ function copyModalSummaryText() {
   document.execCommand("copy");
   alert("복사되었습니다!");
 }
+
 function updateCategoryTexts() {
   const selectedCategories = selected.map(i => i.category);
   const includesAll = (arr) => arr.every(c => selectedCategories.includes(c));
@@ -1212,6 +1279,71 @@ function addCustomSetItem() {
   document.getElementById('customName').value = '';
   document.getElementById('customPrice').value = '';
   document.getElementById('customQty').value = '1';
+}
+
+// 🔧 새로운 8개 저장 슬롯은 slot번호를 101~108로 관리합니다.
+function saveCustomEstimate(slotNumber) {
+  if (selected.length === 0) {
+    alert("저장할 견적이 없습니다.");
+    return;
+  }
+
+  const titleInput = document.getElementById(`customTitle-${slotNumber}`);
+  const title = titleInput.value.trim();
+
+  if (!title) {
+    alert("제목을 입력해주세요.");
+    return;
+  }
+
+  const payload = selected.map(item => ({
+    slot: 100 + slotNumber,
+    name: item.name,
+    price: item.price,
+    quantity: item.quantity,
+    category: item.category,
+    img1: item.img1,
+    img2: item.img2
+  }));
+
+  fetch(SHEETS_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type: "save_custom", data: payload, title: title }),
+    mode: "no-cors"
+  }).then(() => {
+    alert(`${title} 으로 저장되었습니다!`);
+  }).catch(() => {
+    alert("저장에 실패했습니다.");
+  });
+}
+
+function loadCustomEstimate(slotNumber) {
+  fetch(`${SHEETS_API_URL}?type=load_custom&slot=${100 + slotNumber}`)
+    .then(res => res.json())
+    .then(data => {
+      if (!data || !data.items || data.items.length === 0) {
+        alert("저장된 데이터가 없습니다.");
+        return;
+      }
+
+      selected = data.items.map(item => ({
+        name: item.name,
+        price: parseInt(item.price),
+        quantity: parseInt(item.quantity),
+        category: item.category,
+        img1: item.img1,
+        img2: item.img2
+      }));
+
+      document.getElementById(`customTitle-${slotNumber}`).value = data.title || "";
+
+      renderEstimate();
+      alert(`"${data.title}" 견적을 불러왔습니다.`);
+    })
+    .catch(err => {
+      alert("불러오기 실패: " + err);
+    });
 }
   </script>
 
