@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -418,6 +419,14 @@ position: relative;
   padding: 8px 12px;
   font-size: 14px;
 }
+
+#itemsPanel {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+#itemsPanel.show {
+  opacity: 1;
+}
 }
   </style>
 </head>
@@ -482,11 +491,12 @@ position: relative;
 
 <ul class="sub-category">
   <li onclick="selectCategory('세트')">세트</li>
+ <li onclick="selectCategory('메인')">메인</li>
 </ul>
 
     </div>
 
-    <div class="items">
+    <div class="items fade-in" id="itemsPanel">
       <h3>자재 목록</h3>
       <div class="sort-box">
         정렬:
@@ -650,6 +660,7 @@ const CUSTOM_CATEGORY_ORDER = [
   let isAdminMode = false;
 
   async function fetchMaterials() {
+document.getElementById("loadingSpinner").style.display = "block";
     const res = await fetch(SHEETS_API_URL);
     const data = await res.json();
     materials = {};
@@ -665,7 +676,9 @@ materials[item.category].push({
 });
     });
     if (currentCategory) showItems(currentCategory);
-  }
+
+  document.getElementById("loadingSpinner").style.display = "none";  // 스피너 숨기기
+}
 
   function selectCategory(category) {
     currentCategory = category;
@@ -674,9 +687,45 @@ materials[item.category].push({
     showItems(category);
   }
 
-  function showItems(category) {
+function showItems(category) {
   const container = document.getElementById('items');
   container.innerHTML = '';
+
+  // ✅ 메인 카테고리 전용 출력
+ if (category === '메인') {
+    // 👉 상단 타이틀과 정렬 숨기기
+    document.querySelector('.items h3').style.display = 'none';
+    document.querySelector('.sort-box').style.display = 'none';
+
+    const items = materials[category] ? [...materials[category]] : [];
+    const limitedItems = items.slice(0, 9);  // 9개까지만 제한
+
+    const grid = document.createElement('div');
+    grid.style = `
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    `;
+
+  limitedItems.forEach(item => {
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.style.padding = '0';
+  div.innerHTML = `
+    <img src="${item.img1}" 
+         style="width: 100%; height: 300px; object-fit: cover; border-radius: 12px; cursor:pointer;" 
+         onclick="openModal('${item.img1}', '${item.img2 || item.img1}')">
+  `;
+  grid.appendChild(div);
+});
+
+    container.appendChild(grid);
+    return;  // ✅ 메인일 경우 여기서 바로 종료 (나머지 코드 실행 안함)
+  }
+
+  // ✅ 다른 카테고리 진입시 다시 보이게
+  document.querySelector('.items h3').style.display = 'block';
+  document.querySelector('.sort-box').style.display = 'block';
 
   // ✅ 세트 카테고리일 때 커스텀 입력폼 추가
   if (category === '세트') {
@@ -985,42 +1034,47 @@ let modalImages = [];
 let modalIndex = 0;
 
 window.onload = function() {
-  fetchMaterials();
+  const panel = document.getElementById("itemsPanel");
+  panel.classList.remove("show");
 
-  fetch(`${SHEETS_API_URL}?type=get_all_titles`)
-  .then(res => res.json())
-  .then(titles => {
-    // 🔧 titles를 정렬 (불러온 시간 기준)
-    const sortedSlots = Object.entries(titles)
-      .sort((a, b) => {
-        const timeA = new Date(a[1].lastLoaded).getTime();
-        const timeB = new Date(b[1].lastLoaded).getTime();
-        return timeB - timeA;  // 최신순
+  Promise.all([
+    fetchMaterials(),
+    fetch(`${SHEETS_API_URL}?type=get_all_titles`)
+      .then(res => res.json())
+      .then(titles => {
+        const sortedSlots = Object.entries(titles)
+          .sort((a, b) => {
+            const timeA = new Date(a[1].lastLoaded).getTime();
+            const timeB = new Date(b[1].lastLoaded).getTime();
+            return timeB - timeA;
+          })
+          .map(entry => parseInt(entry[0]));
+
+        const container = document.getElementById("customSaveSlots");
+        container.innerHTML = "";
+
+        sortedSlots.forEach(slotNum => {
+          const simpleSlot = slotNum - 100;
+          const titleValue = titles[slotNum]?.title || "";
+
+          const block = document.createElement("div");
+          block.style = "display: flex; flex-direction: column; gap: 6px; align-items: center;";
+          block.innerHTML = `
+            <input id="customTitle-${simpleSlot}" type="text" value="${titleValue}" placeholder="제목 입력" style="width: 160px; padding: 6px;">
+            <div style="display:flex; gap: 8px; margin-bottom: 10px;">
+              <button onclick="saveCustomEstimate(${simpleSlot})">📥 저장</button>
+              <button onclick="loadCustomEstimate(${simpleSlot})">📂 확인</button>
+            </div>
+          `;
+          container.appendChild(block);
+        });
       })
-      .map(entry => parseInt(entry[0]));
-
-    const container = document.getElementById("customSaveSlots");
-    container.innerHTML = "";
-
-    sortedSlots.forEach(slotNum => {
-      const simpleSlot = slotNum - 100;
-      const titleValue = titles[slotNum]?.title || "";
-
-      const block = document.createElement("div");
-      block.style = "display: flex; flex-direction: column; gap: 6px; align-items: center;";
-      block.innerHTML = `
-        <input id="customTitle-${simpleSlot}" type="text" value="${titleValue}" placeholder="제목 입력" style="width: 160px; padding: 6px;">
-        <div style="display:flex; gap: 8px; margin-bottom: 10px;">
-          <button onclick="saveCustomEstimate(${simpleSlot})">📥 저장</button>
-          <button onclick="loadCustomEstimate(${simpleSlot})">📂 확인</button>
-        </div>
-      `;
-      container.appendChild(block);
-    });
-  })
-    .catch(err => {
-      console.error("타이틀 불러오기 실패", err);
-    });
+  ]).then(() => {
+    selectCategory('메인');
+    setTimeout(() => {
+      panel.classList.add("show");
+    }, 100);
+  });
 
   history.pushState(null, null, location.href);
   window.addEventListener('popstate', function(event) {
@@ -1423,6 +1477,20 @@ function reloadSaveSlots() {
     <button onclick="addMaterial()">자재 추가하기</button>
     <button onclick="closeAdmin()">관리자 모드 닫기</button>
   </div>
+
+<div id="loadingSpinner" style="
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  background: rgba(255,255,255,0.8);
+  padding: 40px 60px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 9999;
+">
+  🔄 로딩중...
+</div>
 
 </body>
 </html>
