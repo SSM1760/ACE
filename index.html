@@ -635,7 +635,7 @@ position: relative;
 </div>
 
   <script>
-  const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbxCqTV3DHa4r62DdV5ZYTiKNpYItE_XJCziMBAen-R7as9NzEozYJhNOM7-KgVGsy4A/exec";
+  const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbydtaZOdh_ZGNpQ4Wx9jv6UTTXhSPP07zKqOq_V2fFn8UrUrLvFmGB2BXCIXdbZ5aVS/exec";
 const CUSTOM_CATEGORY_ORDER = [
   "타일", "양변기(원피스)", "양변기(투피스)", "세면기", "탑볼",
   "하부장", "세면수전", "샤워기", "해바라기", "슬라이드장",
@@ -988,18 +988,40 @@ window.onload = function() {
   fetchMaterials();
 
   fetch(`${SHEETS_API_URL}?type=get_all_titles`)
-    .then(res => res.json())
-    .then(titles => {
-      for (let i = 1; i <= 5; i++) {
-        const title = titles[100 + i] || "";
-        document.getElementById(`customTitle-${i}`).value = title;
-      }
-    })
+  .then(res => res.json())
+  .then(titles => {
+    // 🔧 titles를 정렬 (불러온 시간 기준)
+    const sortedSlots = Object.entries(titles)
+      .sort((a, b) => {
+        const timeA = new Date(a[1].lastLoaded).getTime();
+        const timeB = new Date(b[1].lastLoaded).getTime();
+        return timeB - timeA;  // 최신순
+      })
+      .map(entry => parseInt(entry[0]));
+
+    const container = document.getElementById("customSaveSlots");
+    container.innerHTML = "";
+
+    sortedSlots.forEach(slotNum => {
+      const simpleSlot = slotNum - 100;
+      const titleValue = titles[slotNum]?.title || "";
+
+      const block = document.createElement("div");
+      block.style = "display: flex; flex-direction: column; gap: 6px; align-items: center;";
+      block.innerHTML = `
+        <input id="customTitle-${simpleSlot}" type="text" value="${titleValue}" placeholder="제목 입력" style="width: 160px; padding: 6px;">
+        <div style="display:flex; gap: 8px; margin-bottom: 10px;">
+          <button onclick="saveCustomEstimate(${simpleSlot})">📥 저장</button>
+          <button onclick="loadCustomEstimate(${simpleSlot})">📂 확인</button>
+        </div>
+      `;
+      container.appendChild(block);
+    });
+  })
     .catch(err => {
       console.error("타이틀 불러오기 실패", err);
     });
 
-  // ✅ 뒤로가기 차단 (여기 추가)
   history.pushState(null, null, location.href);
   window.addEventListener('popstate', function(event) {
       history.pushState(null, null, location.href);
@@ -1337,15 +1359,56 @@ function loadCustomEstimate(slotNumber) {
       }));
 
       document.getElementById(`customTitle-${slotNumber}`).value = data.title || "";
-
-      // ✅ 불러올 때 estimateTitle도 갱신
       document.getElementById("estimateTitle").textContent = data.title || "견적서";
-
       renderEstimate();
+
+      // 🔧 여기: 불러오기 시간 업데이트
+      fetch(SHEETS_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "update_last_loaded", slot: 100 + slotNumber }),
+        mode: "no-cors"
+      }).then(() => {
+        // 🔧 업데이트 끝난 후 -> 타이틀 리스트 재로딩
+        reloadSaveSlots();
+      });
+
       alert(`"${data.title}" 견적을 불러왔습니다.`);
     })
     .catch(err => {
       alert("불러오기 실패: " + err);
+    });
+}
+
+function reloadSaveSlots() {
+  fetch(`${SHEETS_API_URL}?type=get_all_titles`)
+    .then(res => res.json())
+    .then(titles => {
+      const sortedSlots = Object.entries(titles)
+        .sort((a, b) => new Date(b[1].lastLoaded) - new Date(a[1].lastLoaded))
+        .map(entry => parseInt(entry[0]));
+
+      const container = document.getElementById("customSaveSlots");
+      container.innerHTML = "";
+
+      sortedSlots.forEach(slotNum => {
+        const simpleSlot = slotNum - 100;
+        const titleValue = titles[slotNum]?.title || "";
+
+        const block = document.createElement("div");
+        block.style = "display: flex; flex-direction: column; gap: 6px; align-items: center;";
+        block.innerHTML = `
+          <input id="customTitle-${simpleSlot}" type="text" value="${titleValue}" placeholder="제목 입력" style="width: 160px; padding: 6px;">
+          <div style="display:flex; gap: 8px; margin-bottom: 10px;">
+            <button onclick="saveCustomEstimate(${simpleSlot})">📥 저장</button>
+            <button onclick="loadCustomEstimate(${simpleSlot})">📂 확인</button>
+          </div>
+        `;
+        container.appendChild(block);
+      });
+    })
+    .catch(err => {
+      console.error("타이틀 재로드 실패", err);
     });
 }
   </script>
