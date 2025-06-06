@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -715,6 +716,7 @@ function showItems(category) {
     <img src="${item.img1}" 
          style="width: 100%; height: 300px; object-fit: cover; border-radius: 12px; cursor:pointer;" 
          onclick="openModal('${item.img1}', '${item.img2 || item.img1}')">
+    <div class="name" style="display:none;">${item.name}</div>  <!-- 이름은 존재하지만 숨김 -->
   `;
   grid.appendChild(div);
 });
@@ -1037,38 +1039,41 @@ window.onload = function() {
   const panel = document.getElementById("itemsPanel");
   panel.classList.remove("show");
 
-  Promise.all([
-    fetchMaterials(),
-    fetch(`${SHEETS_API_URL}?type=get_all_titles`)
-      .then(res => res.json())
-      .then(titles => {
-        const sortedSlots = Object.entries(titles)
-          .sort((a, b) => {
-            const timeA = new Date(a[1].lastLoaded).getTime();
-            const timeB = new Date(b[1].lastLoaded).getTime();
-            return timeB - timeA;
-          })
-          .map(entry => parseInt(entry[0]));
+Promise.all([
+  fetchMaterials(),
+  fetch(`${SHEETS_API_URL}?type=get_all_titles`)
+    .then(res => res.json())
+    .then(titles => {
+      const sortedSlots = Object.entries(titles)
+        .sort((a, b) => {
+          const timeA = new Date(a[1].lastLoaded).getTime();
+          const timeB = new Date(b[1].lastLoaded).getTime();
+          return timeB - timeA;
+        })
+        .map(entry => entry[0]);  // 여기 parseInt 제거 (문자열 유지)
 
-        const container = document.getElementById("customSaveSlots");
-        container.innerHTML = "";
+      const container = document.getElementById("customSaveSlots");
+      container.innerHTML = "";
 
-        sortedSlots.forEach(slotNum => {
-          const simpleSlot = slotNum - 100;
-          const titleValue = titles[slotNum]?.title || "";
+      sortedSlots.forEach(slot => {
+        const slotNum = parseInt(slot);  // 문자열 → 숫자 변환
+        if (slotNum < 100) return;       // 1,2,3번 건너뜀
 
-          const block = document.createElement("div");
-          block.style = "display: flex; flex-direction: column; gap: 6px; align-items: center;";
-          block.innerHTML = `
-            <input id="customTitle-${simpleSlot}" type="text" value="${titleValue}" placeholder="제목 입력" style="width: 160px; padding: 6px;">
-            <div style="display:flex; gap: 8px; margin-bottom: 10px;">
-              <button onclick="saveCustomEstimate(${simpleSlot})">📥 저장</button>
-              <button onclick="loadCustomEstimate(${simpleSlot})">📂 확인</button>
-            </div>
-          `;
-          container.appendChild(block);
-        });
-      })
+        const simpleSlot = slotNum - 100;
+        const titleValue = titles[slot]?.title || "";
+
+        const block = document.createElement("div");
+        block.style = "display: flex; flex-direction: column; gap: 6px; align-items: center;";
+        block.innerHTML = `
+          <input id="customTitle-${simpleSlot}" type="text" value="${titleValue}" placeholder="제목 입력" style="width: 160px; padding: 6px;">
+          <div style="display:flex; gap: 8px; margin-bottom: 10px;">
+            <button onclick="saveCustomEstimate(${simpleSlot})">📥 저장</button>
+            <button onclick="loadCustomEstimate(${simpleSlot})">📂 확인</button>
+          </div>
+        `;
+        container.appendChild(block);
+      });
+    })
   ]).then(() => {
     selectCategory('메인');
     setTimeout(() => {
@@ -1229,8 +1234,14 @@ function loadSavedEstimate(slot) {
         img1: item.img1,
         img2: item.img2
       }));
+
       renderEstimate();
-      updateEstimateTitle(slot === 1 ? "거실" : "안방");
+
+      const estimateTitleEl = document.getElementById("estimateTitle");
+      if (estimateTitleEl) {
+        estimateTitleEl.textContent = slot === 1 ? "거실" : slot === 2 ? "안방" : slot === 3 ? "세트" : "견적서";
+      }
+
       alert(`저장${slot}번 견적을 불러왔습니다.`);
     })
     .catch(err => {
@@ -1412,18 +1423,24 @@ function loadCustomEstimate(slotNumber) {
         img2: item.img2
       }));
 
-      document.getElementById(`customTitle-${slotNumber}`).value = data.title || "";
-      document.getElementById("estimateTitle").textContent = data.title || "견적서";
       renderEstimate();
 
-      // 🔧 여기: 불러오기 시간 업데이트
+      const titleElement = document.getElementById(`customTitle-${slotNumber}`);
+      if (titleElement) {
+        titleElement.value = data.title || "";
+      }
+
+      const estimateTitleEl = document.getElementById("estimateTitle");
+      if (estimateTitleEl) {
+        estimateTitleEl.textContent = data.title || "견적서";
+      }
+
       fetch(SHEETS_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "update_last_loaded", slot: 100 + slotNumber }),
         mode: "no-cors"
       }).then(() => {
-        // 🔧 업데이트 끝난 후 -> 타이틀 리스트 재로딩
         reloadSaveSlots();
       });
 
@@ -1440,14 +1457,17 @@ function reloadSaveSlots() {
     .then(titles => {
       const sortedSlots = Object.entries(titles)
         .sort((a, b) => new Date(b[1].lastLoaded) - new Date(a[1].lastLoaded))
-        .map(entry => parseInt(entry[0]));
+        .map(entry => entry[0]);  // 👉 여기서는 parseInt 하지마 (문자열 유지)
 
       const container = document.getElementById("customSaveSlots");
       container.innerHTML = "";
 
-      sortedSlots.forEach(slotNum => {
+      sortedSlots.forEach(slot => {
+        const slotNum = parseInt(slot);  // ✅ 문자열 → 숫자 변환 정확히 여기서 함
+        if (slotNum < 100) return;       // ✅ 1,2,3번은 표시 안함 (거실, 안방, 세트 제외)
+
         const simpleSlot = slotNum - 100;
-        const titleValue = titles[slotNum]?.title || "";
+        const titleValue = titles[slot]?.title || "";
 
         const block = document.createElement("div");
         block.style = "display: flex; flex-direction: column; gap: 6px; align-items: center;";
