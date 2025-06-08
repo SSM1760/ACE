@@ -21,12 +21,10 @@
     }
 
     .category {
-      flex: 0 0 220px;
-      max-height: 100vh;
-      overflow-y: auto;
-      position: sticky;
-      top: 20px;
-    }
+  flex: 0 0 220px;
+  position: sticky;
+  top: 20px;
+}
 
     .items {
       flex: 1 1 700px;
@@ -395,7 +393,7 @@ position: relative;
   }
 
   .items #items {
-    grid-template-columns: repeat(2, 1fr); /* 자재 카드 2개씩 정렬 */
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
 
   .item {
