@@ -786,7 +786,7 @@ function showItems(category) {
     </div>
     <div class="control">
       <input type="number" min="1" value="1" id="qty-${item.name}">
-      <button onclick="addToEstimate('${category}', '${item.name}')">추가</button>
+      <button onclick="addToEstimate('${category}', '${item.name}')">선택</button>
       ${
         selected.some(sel => sel.name === item.name)
           ? `<button onclick="removeFromEstimate('${item.name}')">취소</button>`
