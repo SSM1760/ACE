@@ -509,7 +509,7 @@ position: relative;
 <hr style="margin: 10px 0;" />
 
 <ul class="sub-category">
-  <li onclick="selectCategory('세트')">세트</li>
+  <li onclick="selectCategory('세트')" id="setCategoryLi">별도금액</li>
  <li onclick="selectCategory('메인')">메인</li>
 </ul>
 
@@ -944,6 +944,7 @@ function removeFromEstimate(name) {
   if (pw === "1760") {
     isAdminMode = true;
     document.getElementById('adminPanel').style.display = 'block';
+document.getElementById("setCategoryLi").style.display = "list-item";
 
     // 자재 목록 즉시 반영
     if (currentCategory) showItems(currentCategory);
@@ -958,6 +959,7 @@ function removeFromEstimate(name) {
   function closeAdmin() {
   isAdminMode = false;
   document.getElementById('adminPanel').style.display = 'none';
+document.getElementById("setCategoryLi").style.display = "none";
 
   // 자재 목록 일반 모드로 갱신
   if (currentCategory) showItems(currentCategory);
@@ -1083,6 +1085,7 @@ let modalIndex = 0;
 window.onload = function() {
   const panel = document.getElementById("itemsPanel");
   panel.classList.remove("show");
+ document.getElementById("setCategoryLi").style.display = "none";
 
 Promise.all([
   fetchMaterials(),
