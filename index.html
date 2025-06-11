@@ -1,6 +1,5 @@
 
 
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -228,6 +227,10 @@ position: relative;
       border: 1px solid #ccc;
       border-radius: 8px;
       box-sizing: border-box;
+    }
+
+    #totalWrapper {
+      display: none;
     }
 
     label {
@@ -531,7 +534,7 @@ position: relative;
     <div class="estimate">
       <h3 id="estimateTitle">견적서</h3>
       <ul id="selectedItems"></ul>
-      <p><strong>총액: </strong><span id="totalPrice">0</span>원</p>
+      <p id="totalWrapper"><strong>총액: </strong><span id="totalPrice">0</span>원</p>
       <button onclick="summarizeEstimate()">정리</button>
 <button onclick="clearEstimate()" style="margin-left: 10px;">전체 삭제</button>
 
@@ -851,46 +854,63 @@ function updateSelectedBorders() {
   });
 }
 
-  function renderEstimate() {
-    const list = document.getElementById('selectedItems');
-    list.innerHTML = '';
+function renderEstimate() {
+  const list = document.getElementById('selectedItems');
+  list.innerHTML = '';
 
   selected.sort((a, b) => {
     const aIndex = CUSTOM_CATEGORY_ORDER.indexOf(a.category);
     const bIndex = CUSTOM_CATEGORY_ORDER.indexOf(b.category);
-
     if (aIndex === -1 && bIndex === -1) return 0;
     if (aIndex === -1) return 1;
     if (bIndex === -1) return -1;
     return aIndex - bIndex;
   });
 
-    selected.forEach((item, i) => {
-      const nameOnly = item.name.split("(")[0];
-      const code = item.name.match(/\((.*?)\)/)?.[1] || '';
-      list.innerHTML += `
-        <li class="estimate-item">
-          <img src="${item.img1}" onclick="openModal('${item.img1}', '${item.img2}')">
-          <div class="info-line">
-            <div>${nameOnly}</div>
-            <div>${code} x ${item.quantity}</div>
-          </div>
-          <div class="price-delete">
-            <span>${(item.price * item.quantity).toLocaleString()}원</span>
-            <button class="delete-btn" onclick="removeItem(${i})">✕</button>
-          </div>
-        </li>
-      `;
-    });
-updateSelectedBorders();
-updateTotal();
-updateCategoryTexts();
+  selected.forEach((item, i) => {
+  // ✅ 특정 카테고리는 관리자 모드일 때만 표시
+  const hiddenCategories = ["타일", "시공비", "별도 시공비"];
+  if (!isAdminMode && hiddenCategories.includes(item.category)) {
+    return;  // 일반 사용자일 경우 해당 항목 건너뜀
   }
 
+  const nameOnly = item.name.split("(")[0];
+  const code = item.name.match(/\((.*?)\)/)?.[1] || '';
+  list.innerHTML += `
+    <li class="estimate-item">
+      <img src="${item.img1}" onclick="openModal('${item.img1}', '${item.img2}')">
+      <div class="info-line">
+        <div>${nameOnly}</div>
+        <div>${code} x ${item.quantity}</div>
+      </div>
+      <div class="price-delete">
+        <span ${!isAdminMode ? 'style="display:none;"' : ''}>
+          ${(item.price * item.quantity).toLocaleString()}원
+        </span>
+        <button class="delete-btn" onclick="removeItem(${i})">✕</button>
+      </div>
+    </li>
+  `;
+});
+
+  updateSelectedBorders();
+  updateTotal();
+  updateCategoryTexts();
+}
+
   function updateTotal() {
-    const total = selected.reduce((sum, i) => sum + i.price * i.quantity, 0);
-    document.getElementById('totalPrice').textContent = total.toLocaleString();
+  const total = selected.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const totalPriceSpan = document.getElementById('totalPrice');
+  const totalWrapper = document.getElementById('totalWrapper');
+
+  if (isAdminMode) {
+    totalPriceSpan.textContent = total.toLocaleString();
+    totalWrapper.style.display = "block";
+  } else {
+    totalPriceSpan.textContent = "";
+    totalWrapper.style.display = "none";
   }
+}
 
   function summarizeEstimate() {
   const countMap = {};
@@ -920,21 +940,31 @@ function removeFromEstimate(name) {
 }
 
   function toggleAdmin() {
-    const pw = prompt("관리자 비밀번호를 입력하세요:");
-    if (pw === "1760") {
-      isAdminMode = true;
-      document.getElementById('adminPanel').style.display = 'block';
-      if (currentCategory) showItems(currentCategory);
-    } else {
-      alert("비밀번호가 틀렸습니다.");
-    }
+  const pw = prompt("관리자 비밀번호를 입력하세요:");
+  if (pw === "1760") {
+    isAdminMode = true;
+    document.getElementById('adminPanel').style.display = 'block';
+
+    // 자재 목록 즉시 반영
+    if (currentCategory) showItems(currentCategory);
+
+    // ✅ 견적서도 즉시 다시 렌더링
+    renderEstimate();
+  } else {
+    alert("비밀번호가 틀렸습니다.");
   }
+}
 
   function closeAdmin() {
-    isAdminMode = false;
-    document.getElementById('adminPanel').style.display = 'none';
-    if (currentCategory) showItems(currentCategory);
-  }
+  isAdminMode = false;
+  document.getElementById('adminPanel').style.display = 'none';
+
+  // 자재 목록 일반 모드로 갱신
+  if (currentCategory) showItems(currentCategory);
+
+  // ✅ 견적서도 즉시 일반 모드로 갱신
+  renderEstimate();
+}
 
 function editItemPrice(index) {
   const span = document.getElementById(`item-price-${index}`);
