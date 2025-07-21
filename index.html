@@ -774,11 +774,19 @@ function showItems(category) {
 
     items.forEach((item, i) => {
   const div = document.createElement('div');
+  const img2Safe = item.img2 || item.img1;
+
   div.className = 'item';
   div.innerHTML = `
     ${item.isBest ? `<div class="best-badge">BEST</div>` : ""}
     ${item.isBasic ? `<div class="basic-badge">기본형</div>` : ""}
-    <img src="${item.img1}" onclick="openModal('${item.img1}', '${item.img2}')">
+    <img 
+      src="${item.img1}" 
+      data-img1="${item.img1}" 
+      data-img2="${img2Safe}" 
+      onclick="openModal('${item.img1}', '${img2Safe}')" 
+      onmouseover="this.src=this.dataset.img2" 
+      onmouseout="this.src=this.dataset.img1">
     <div class="name">${item.name}</div>
     <div class="price">
       <span id="item-price-${i}">${item.price.toLocaleString()}원</span>
