@@ -1,5 +1,7 @@
 
 
+
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -363,6 +365,24 @@ position: relative;
   100% { transform: rotate(360deg); }
 }
 
+.detail-btn {
+  margin-top: 8px;
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(6px);
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  color: #333;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.detail-btn:hover {
+  background: rgba(240,240,240,0.8);
+  border-color: #bbb;
+}
+
 @media (max-width: 1100px) {
   body > div {
     flex-direction: column;
@@ -445,6 +465,22 @@ position: relative;
 #itemsPanel.show {
   opacity: 1;
 }
+.detail-btn {
+  margin-top: 6px;
+  background-color: #f7f9fb;
+  border: 1px solid #ccd8e0;
+  color: #333;
+  font-size: 14px;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.detail-btn:hover {
+  background-color: #e6eff7;
+  border-color: #a8c4d9;
+  color: #0077cc;
 }
   </style>
 
@@ -664,7 +700,7 @@ position: relative;
 </div>
 
   <script>
-  const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbydtaZOdh_ZGNpQ4Wx9jv6UTTXhSPP07zKqOq_V2fFn8UrUrLvFmGB2BXCIXdbZ5aVS/exec";
+  const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwWTg2zYhysR6hr4nf_o1LEAdwhMKBB_V6mrtBcvgweRFVxD55qf6JPKKkjjxWzot6P/exec";
 const CUSTOM_CATEGORY_ORDER = [
   "타일", "양변기(원피스)", "양변기(투피스)", "세면기", "탑볼",
   "하부장", "세면수전", "샤워기", "해바라기", "슬라이드장",
@@ -801,6 +837,7 @@ function showItems(category) {
           : ""
       }
     </div>
+<button class="detail-btn" onclick="openDetailModal('${item.name}')">상세보기</button>
 ${isAdminMode ? `
   ${item.isBest
     ? `<button class="best-btn" onclick="unmarkAsBest('${category}', '${item.name}')">BEST 삭제</button>`
@@ -1129,7 +1166,12 @@ Promise.all([
         `;
         container.appendChild(block);
       });
-    })
+    }),
+fetch(`${SHEETS_API_URL}?type=load_all_details`)
+      .then(res => res.json())
+      .then(data => {
+        detailData = data; // ✅ 여기에 저장
+      })
   ]).then(() => {
     selectCategory('메인');
     setTimeout(() => {
@@ -1575,6 +1617,43 @@ function reloadSaveSlots() {
       console.error("타이틀 재로드 실패", err);
     });
 }
+
+let detailData = {};
+let currentDetailName = "";
+
+function openDetailModal(name) {
+  currentDetailName = name;
+  document.getElementById("detailItemName").textContent = name;
+  document.getElementById("detailTextArea").value = detailData[name] || "";
+  document.getElementById("detailModal").style.display = "flex";
+}
+
+function closeDetailModal() {
+  document.getElementById("detailModal").style.display = "none";
+  currentDetailName = "";
+}
+
+function saveDetail() {
+  const detail = document.getElementById("detailTextArea").value.trim();
+  if (!currentDetailName) return;
+
+  fetch(SHEETS_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "save_detail",
+      name: currentDetailName,
+      detail: detail
+    }),
+    mode: "no-cors"
+  }).then(() => {
+    alert("상세정보가 저장되었습니다.");
+    detailData[currentDetailName] = detail;
+    closeDetailModal();
+  }).catch(() => {
+    alert("저장 실패");
+  });
+}
   </script>
 
   <div class="admin" id="adminPanel">
@@ -1612,5 +1691,14 @@ function reloadSaveSlots() {
   </div>
 </div>
 
+<div id="detailModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:3000; justify-content:center; align-items:center;">
+  <div style="background:#fff; padding:30px; border-radius:12px; width:90%; max-width:600px; position:relative;">
+    <button onclick="closeDetailModal()" style="position:absolute; top:10px; right:10px; font-size:24px; background:none; border:none; cursor:pointer;">✕</button>
+    <h3 style="margin-top:0; text-align:center;">상세정보 입력</h3>
+    <div style="margin-bottom: 10px;"><strong id="detailItemName"></strong></div>
+    <textarea id="detailTextArea" style="width:100%; height:200px;"></textarea>
+    <button onclick="saveDetail()" style="margin-top:10px;">저장</button>
+  </div>
+</div>
 </body>
 </html>
