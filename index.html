@@ -1,7 +1,5 @@
 
 
-
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -538,6 +536,7 @@ position: relative;
 <hr style="margin: 10px 0;" />
 
 <ul class="sub-category">
+<li onclick="selectCategory('철거')">철거</li>
   <li onclick="selectCategory('시공비')">시공비</li>
   <li onclick="selectCategory('별도 시공비')">별도 시공비</li>
 </ul>
@@ -700,7 +699,7 @@ position: relative;
 </div>
 
   <script>
-  const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwWTg2zYhysR6hr4nf_o1LEAdwhMKBB_V6mrtBcvgweRFVxD55qf6JPKKkjjxWzot6P/exec";
+  const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbz9n7cuAupEjoyVFIfefZZPKSUHNG9h6B1_lSrejfeoe97Qivby9WUlOcbmQJ9FsC2d/exec";
 const CUSTOM_CATEGORY_ORDER = [
   "타일", "양변기(원피스)", "양변기(투피스)", "세면기", "탑볼",
   "하부장", "세면수전", "샤워기", "해바라기", "슬라이드장",
@@ -810,7 +809,7 @@ function showItems(category) {
 
     items.forEach((item, i) => {
   const div = document.createElement('div');
-  const img2Safe = item.img2 || item.img1;
+  const img2Safe = (item.img2 && item.img2 !== "undefined") ? item.img2 : item.img1;
 
   div.className = 'item';
   div.innerHTML = `
@@ -838,6 +837,9 @@ function showItems(category) {
       }
     </div>
 <button class="detail-btn" onclick="openDetailModal('${item.name}')">상세보기</button>
+${isAdminMode ? `
+  <button class="best-btn" onclick="uploadImage2('${category}', '${item.name}')">이미지2 추가</button>
+` : ""}
 ${isAdminMode ? `
   ${item.isBest
     ? `<button class="best-btn" onclick="unmarkAsBest('${category}', '${item.name}')">BEST 삭제</button>`
@@ -960,7 +962,7 @@ function renderEstimate() {
   function summarizeEstimate() {
   const countMap = {};
   selected.forEach(item => {
-    if (item.category === "시공비" || item.category === "별도 시공비") return;
+    if (item.category === "시공비" || item.category === "별도 시공비" || item.category === "철거") return;
     if (!countMap[item.name]) countMap[item.name] = 0;
     countMap[item.name] += item.quantity;
   });
@@ -1653,6 +1655,45 @@ function saveDetail() {
   }).catch(() => {
     alert("저장 실패");
   });
+}
+
+function uploadImage2(category, name) {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img2 = reader.result;
+
+      const item = materials[category].find(i => i.name === name);
+      if (!item) return;
+
+      fetch(SHEETS_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+type: "update_image2",
+          category,
+          name,
+          price: item.price,
+          img1: item.img1,
+          img2: img2  // ✅ 이미지2만 갱신
+        }),
+        mode: "no-cors"
+      }).then(() => {
+        alert("이미지2가 추가되었습니다!");
+        fetchMaterials().then(() => showItems(currentCategory));
+      }).catch(() => {
+        alert("이미지2 추가 실패");
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
 }
   </script>
 
