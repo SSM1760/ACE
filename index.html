@@ -868,19 +868,21 @@ function showItems(category) {
       }
     </div>
 <button class="detail-btn" onclick="openDetailModal('${item.name}')">상세보기</button>
+
 ${isAdminMode ? `
-  <button class="best-btn" onclick="uploadImage2('${category}', '${item.name}')">이미지2 추가</button>
-` : ""}
-${isAdminMode ? `
-  ${item.isBest
-    ? `<button class="best-btn" onclick="unmarkAsBest('${category}', '${item.name}')">BEST 삭제</button>`
-    : `<button class="best-btn" onclick="markAsBest('${category}', '${item.name}')">BEST 추가</button>`}
-  ${item.isBasic
-    ? `<button class="best-btn" onclick="unmarkAsBasic('${category}', '${item.name}')">기본형 삭제</button>`
-    : `<button class="best-btn" onclick="markAsBasic('${category}', '${item.name}')">기본형 추가</button>`}
-  ${item.soldOut
-    ? `<button class="best-btn" onclick="unmarkAsSoldOut('${category}', '${item.name}')">일시품절 해제</button>`
-    : `<button class="best-btn" onclick="markAsSoldOut('${category}', '${item.name}')">일시품절 추가</button>`}
+  <button class="admin-expand-btn" onclick="toggleAdminPanel(${i})">추가옵션</button>
+  <div class="admin-options" id="admin-options-${i}" style="display: none;">
+    <button class="best-btn" onclick="uploadImage2('${category}', '${item.name}')">이미지2 추가</button>
+    ${item.isBest
+      ? `<button class="best-btn" onclick="unmarkAsBest('${category}', '${item.name}')">BEST 삭제</button>`
+      : `<button class="best-btn" onclick="markAsBest('${category}', '${item.name}')">BEST 추가</button>`}
+    ${item.isBasic
+      ? `<button class="best-btn" onclick="unmarkAsBasic('${category}', '${item.name}')">기본형 삭제</button>`
+      : `<button class="best-btn" onclick="markAsBasic('${category}', '${item.name}')">기본형 추가</button>`}
+    ${item.soldOut
+      ? `<button class="best-btn" onclick="unmarkAsSoldOut('${category}', '${item.name}')">일시품절 해제</button>`
+      : `<button class="best-btn" onclick="markAsSoldOut('${category}', '${item.name}')">일시품절 추가</button>`}
+  </div>
 ` : ""}
 `;
       container.appendChild(div);
@@ -893,6 +895,15 @@ ${isAdminMode ? `
     currentSort = type;
     if (currentCategory) showItems(currentCategory);
   }
+
+function toggleAdminPanel(index) {
+  const panel = document.getElementById(`admin-options-${index}`);
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+  } else {
+    panel.style.display = 'none';
+  }
+}
 
   function addToEstimate(category, name) {
     const item = materials[category].find(i => i.name === name);
