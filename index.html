@@ -1,6 +1,5 @@
 
 
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -1079,7 +1078,7 @@ function saveItemPrice(name, index) {
   const newPrice = parseInt(input.value);
   const item = findItemByName(currentCategory, name);
 
-  if (!isNaN(newPrice) && newPrice > 0 && item) {
+  if (!isNaN(newPrice) && newPrice >= 0 && item) {
     item.price = newPrice;
 
     fetch(SHEETS_API_URL, {
@@ -1118,10 +1117,10 @@ function findItemByName(category, name) {
     const file1 = document.getElementById("adminImgFile1").files[0];
     const file2 = document.getElementById("adminImgFile2").files[0];
 
-    if (!name || !price || !file1 || !currentCategory) {
-      alert("필수 항목을 모두 입력해주세요! (이미지1은 필수)");
-      return;
-    }
+    if (!name || isNaN(price) || price < 0 || !file1 || !currentCategory) {
+  alert("필수 항목을 모두 입력해주세요! (가격은 0 이상이어야 합니다)");
+  return;
+}
 
     const reader1 = new FileReader();
     const reader2 = new FileReader();
